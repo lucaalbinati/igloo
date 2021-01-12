@@ -69,14 +69,6 @@ def create_demi_sphere(name, radius, thickness):
             bm.faces.remove(face)
     bpy.ops.object.mode_set(mode='OBJECT')
 
-    # for vert in bm.verts:
-    #     if np.isclose(vert.co[2], 0, atol=1e-05):
-    #         vert.select = True
-    # bpy.ops.object.mode_set(mode='OBJECT')
-    # bpy.ops.object.mode_set(mode='EDIT')
-    # bpy.ops.mesh.delete(type='ONLY_FACE')
-    # bpy.ops.object.mode_set(mode='OBJECT')
-
     # Apply 'Solidify' modifier
     bpy.ops.object.modifier_add(type='SOLIDIFY')
     bpy.context.object.modifiers["Solidify"].thickness = IGLOO_THICKNESS
@@ -85,101 +77,6 @@ def create_demi_sphere(name, radius, thickness):
     return sphere_obj
 
 igloo_obj = create_demi_sphere('igloo', IGLOO_RADIUS, IGLOO_THICKNESS)
-
-# #######################################
-# ### JOIN BOTH DEMI SPHERES INTO ONE ###
-# #######################################
-
-# # Join inner and outer sphere objects to form the igloo
-# bpy.ops.object.select_all(action='DESELECT')
-# outer_sphere_obj.select_set(True)
-# inner_sphere_obj.select_set(True)
-# bpy.ops.object.join()
-# igloo_obj = bpy.context.object
-# igloo_obj.name = 'igloo'
-
-# # Connect them at the bottom
-# bpy.ops.object.mode_set(mode='EDIT')
-# bpy.ops.mesh.select_all(action='DESELECT')
-# bm = bmesh.from_edit_mesh(igloo_obj.data)
-
-# outer_bottom_edges ,inner_bottom_edges = [], []
-# for edge in bm.edges:
-#     is_bottom_edge = all([np.isclose(vert.co[2], 0, atol=1e-05) for vert in edge.verts])
-    
-#     if is_bottom_edge:
-#         x, y = edge.verts[0].co[0], edge.verts[0].co[1]
-#         dist = math.sqrt(x**2 + y**2)
-#         if np.isclose(dist, IGLOO_RADIUS):
-#             outer_bottom_edges.append(edge)
-#         elif np.isclose(dist, IGLOO_RADIUS - IGLOO_THICKNESS):
-#             inner_bottom_edges.append(edge)
-        
-# def eval_edge(edge):
-#     # the y-coord is 0+ because otherwise some vertices get sorted at the end while their respective other at the beginning, resulting in weird faces
-#     ref_vector=(1, 0.00001, 0)
-#     val_1 = np.dot(ref_vector, edge.verts[0].co[:])
-#     val_2 = np.dot(ref_vector, edge.verts[1].co[:])
-#     return min(val_1, val_2)
-
-# outer_bottom_edges = sorted(outer_bottom_edges, key=eval_edge)
-# inner_bottom_edges = sorted(inner_bottom_edges, key=eval_edge)
-
-# for outer_edge, inner_edge in zip(outer_bottom_edges, inner_bottom_edges):
-#     bpy.ops.mesh.select_all(action='DESELECT')
-#     outer_edge.select = True
-#     inner_edge.select = True
-#     bpy.ops.mesh.edge_face_add()
-
-# bpy.ops.object.mode_set(mode='OBJECT')
-
-###############################################
-### LOOP CUT BEFORE SUBDIVIDING BOTTOM FACE ###
-###############################################
-
-# def loop_cut_and_scale(igloo_obj, scalar):
-#     bpy.ops.object.mode_set(mode='OBJECT')
-#     bpy.ops.object.select_all(action='DESELECT')
-#     igloo_obj.select_set(True)
-#     bpy.ops.object.mode_set(mode='EDIT')
-    
-#     win      = bpy.context.window
-#     scr      = win.screen
-#     areas3d  = [area for area in scr.areas if area.type == 'VIEW_3D']
-#     region   = [region for region in areas3d[0].regions if region.type == 'WINDOW']
-#     override = {'window':win,
-#                 'screen':scr,
-#                 'area'  :areas3d[0],
-#                 'region':region[0],
-#                 'scene' :bpy.context.scene,
-#                 }
-    
-#     bpy.ops.mesh.loopcut_slide(override, MESH_OT_loopcut={"number_cuts":1, "smoothness":0, "falloff":'INVERSE_SQUARE', "object_index":0, "edge_index":8201, "mesh_select_mode_init":(False, False, True)}, TRANSFORM_OT_edge_slide={"value":0, "single_side":False, "use_even":False, "flipped":False, "use_clamp":True, "mirror":True, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "correct_uv":True, "release_confirm":True, "use_accurate":False})
-
-#     bm = bmesh.from_edit_mesh(igloo_obj.data)
-#     for vert in bm.verts:
-#         if vert.select:
-#             vert.co[0] *= scalar
-#             vert.co[1] *= scalar
-        
-#     bpy.ops.object.mode_set(mode='OBJECT')
-
-
-# length_outer = IGLOO_RADIUS
-# length_inner = IGLOO_RADIUS - IGLOO_THICKNESS
-# length_middle = (length_outer + length_inner) / 2
-
-# inner_scalar = length_inner / length_middle
-# #loop_cut_and_scale(igloo_obj, scalar=inner_scalar)
-# outer_scalar = length_outer / length_middle
-# #loop_cut_and_scale(igloo_obj, scalar=outer_scalar)
-
-# # Subdivide
-# #bpy.ops.object.modifier_add(type='SUBSURF')
-# #bpy.context.object.modifiers["Subdivision"].levels = 2
-# #bpy.context.object.modifiers["Subdivision"].render_levels = 5
-# #bpy.ops.object.modifier_apply(modifier="Subdivision")
-
 
 ################################
 ### DIVIDE IGLOO INTO BLOCKS ###
