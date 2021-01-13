@@ -22,13 +22,17 @@ PRECISION = 64
 ### UTILS ###
 #############
 
-def select_obj(obj, enter_editmode=False):
+def select_objs(objs, enter_editmode=False):
     bpy.ops.object.select_all(action='DESELECT')
-    obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
+    for obj in objs:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
 
     if enter_editmode:
         bpy.ops.object.mode_set(mode='EDIT')
+
+def select_obj(obj, enter_editmode=False):
+    return select_objs([obj], enter_editmode)
 
 def delete_obj(obj):
     bpy.ops.object.select_all(action='DESELECT')
@@ -86,18 +90,26 @@ print("Created igloo demi-sphere.")
 ###############################################
 ### DIVIDE VERTICALLY AND CUT OFF IGLOO TOP ###
 
-def create_cone_and_cut_igloo(igloo_obj, vertical_angle):
+def create_cones_and_cut_igloo(igloo_obj, vertical_angles):
     bpy.ops.object.mode_set(mode='OBJECT')
 
-    # Compute cone dimensions based on 'vertical_angle'
-    depth = IGLOO_RADIUS
-    radius = depth * math.tan(math.radians(vertical_angle))
+    # Create all cones
+    cones_obj = []
+    for vertical_angle in vertical_angles:
+        # Compute cone dimensions based on 'vertical_angle'
+        depth = IGLOO_RADIUS
+        radius = depth * math.tan(math.radians(vertical_angle))
 
-    # Create cone, to be used as a boolean difference object
-    bpy.ops.mesh.primitive_cone_add(radius1=radius, depth=depth, vertices=PRECISION, end_fill_type='NOTHING', enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+        # Create cone
+        bpy.ops.mesh.primitive_cone_add(radius1=radius, depth=depth, vertices=PRECISION, end_fill_type='NOTHING', enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+        cones_obj.append(bpy.context.active_object)
+        bpy.ops.transform.rotate(value=math.radians(180), orient_axis='Y', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, True, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
+        bpy.ops.transform.translate(value=(0, 0, depth/2), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
+
+    # Join all cone objects together
+    select_objs(cones_obj)
+    bpy.ops.object.join()
     difference_obj = bpy.context.active_object
-    bpy.ops.transform.rotate(value=math.radians(180), orient_axis='Y', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, True, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
-    bpy.ops.transform.translate(value=(0, 0, depth/2), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
 
     # Apply 'Solidify' modifier
     bpy.ops.object.modifier_add(type='SOLIDIFY')
@@ -114,6 +126,9 @@ def create_cone_and_cut_igloo(igloo_obj, vertical_angle):
     delete_obj(difference_obj)
 
     return radius
+
+def create_cone_and_cut_igloo(igloo_obj, vertical_angle):
+    return create_cones_and_cut_igloo(igloo_obj, [vertical_angle])
 
 angle = int(90 / NB_BRICKS_VERTICAL)
 
@@ -140,8 +155,7 @@ while curr < 90:
     angles.append(curr)
     curr += angle
 
-for angle in angles:
-    create_cone_and_cut_igloo(igloo_obj, angle)
+create_cones_and_cut_igloo(igloo_obj, angles)
 
 print("Cut igloo, vertically.")
 
