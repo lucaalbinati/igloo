@@ -94,7 +94,7 @@ def create_cones_and_cut_igloo(igloo_obj, vertical_angles):
     bpy.ops.object.mode_set(mode='OBJECT')
 
     # Create all cones
-    cones_obj = []
+    cone_objs = []
     for vertical_angle in vertical_angles:
         # Compute cone dimensions based on 'vertical_angle'
         depth = IGLOO_RADIUS
@@ -102,12 +102,12 @@ def create_cones_and_cut_igloo(igloo_obj, vertical_angles):
 
         # Create cone
         bpy.ops.mesh.primitive_cone_add(radius1=radius, depth=depth, vertices=PRECISION, end_fill_type='NOTHING', enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
-        cones_obj.append(bpy.context.active_object)
+        cone_objs.append(bpy.context.active_object)
         bpy.ops.transform.rotate(value=math.radians(180), orient_axis='Y', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, True, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
         bpy.ops.transform.translate(value=(0, 0, depth/2), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
 
     # Join all cone objects together
-    select_objs(cones_obj)
+    select_objs(cone_objs)
     bpy.ops.object.join()
     difference_obj = bpy.context.active_object
 
@@ -162,22 +162,29 @@ print("Cut igloo, vertically.")
 ###########################
 ### DIVIDE ALONG Z AXIS ###
 
-def create_plane_and_cut_igloo(igloo_obj, igloo_top_radius, z_rotation):
+def create_planes_and_cut_igloo(igloo_obj, igloo_top_radius, z_rotations):
     bpy.ops.object.mode_set(mode='OBJECT')
 
-    # Create cube, to be used as a boolean difference object
-    bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+    plane_objs = []
+    for z_rotation in z_rotations:
+        # Create cube, to be used as a boolean difference object
+        bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+        plane_objs.append(bpy.context.active_object)
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.transform.translate(value=(0, 1, 0), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, True, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.transform.resize(value=(BRICKS_GAP/2, 2*IGLOO_RADIUS, 2 * IGLOO_RADIUS), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.transform.translate(value=(0, igloo_top_radius/2, 0), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, True, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Rotate the object along the Z-axis
+        bpy.ops.transform.rotate(value=math.radians(z_rotation), orient_axis='Z', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
+
+    # Join all plane objects together
+    select_objs(plane_objs)
+    bpy.ops.object.join()
     difference_obj = bpy.context.active_object
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.transform.translate(value=(0, 1, 0), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, True, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.transform.resize(value=(BRICKS_GAP/2, 2*IGLOO_RADIUS, 2 * IGLOO_RADIUS), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.transform.translate(value=(0, igloo_top_radius/2, 0), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, True, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
-    bpy.ops.object.mode_set(mode='OBJECT')
-
-    # Rotate the object along the Z-axis
-    bpy.ops.transform.rotate(value=math.radians(z_rotation), orient_axis='Z', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
 
     # Apply 'Boolean' modifier to the sphere
     select_obj(igloo_obj)
@@ -195,7 +202,6 @@ while curr < 360:
     angles.append(curr)
     curr += angle
 
-for angle in angles:
-    create_plane_and_cut_igloo(igloo_obj, igloo_top_radius, angle)
+create_planes_and_cut_igloo(igloo_obj, igloo_top_radius, angles)
 
 print("Cut igloo, along Z rotation axis.")
