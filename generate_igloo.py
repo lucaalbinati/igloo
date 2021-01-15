@@ -205,3 +205,21 @@ while curr < 360:
 create_planes_and_cut_igloo(igloo_obj, igloo_top_radius, angles)
 
 print("Cut igloo, along Z rotation axis.")
+
+######################################
+### MAKE BLOCK INTO ITS OWN OBJECT ###
+
+select_obj(igloo_obj)
+bpy.ops.object.mode_set(mode='EDIT')
+bpy.ops.mesh.separate(type="LOOSE")
+bpy.ops.object.mode_set(mode='OBJECT')
+
+################################
+### ISOLATE DIFFERENT BLOCKS ###
+################################
+
+unique_blocks_obj = []
+unique_blocks_obj.append(igloo_top_obj)
+unique_blocks_obj.append(igloo_obj)
+for i in range(1, NB_BRICKS_VERTICAL-1):
+    unique_blocks_obj.append(bpy.data.objects["igloo.{:03d}".format(i)])
