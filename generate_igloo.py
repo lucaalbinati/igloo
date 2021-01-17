@@ -22,6 +22,12 @@ PRECISION = 64
 ### UTILS ###
 #############
 
+def object_mode():
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+def edit_mode():
+    bpy.ops.object.mode_set(mode='EDIT')
+
 def select_objs(objs, enter_editmode=False):
     bpy.ops.object.select_all(action='DESELECT')
     for obj in objs:
@@ -29,7 +35,7 @@ def select_objs(objs, enter_editmode=False):
         bpy.context.view_layer.objects.active = obj
 
     if enter_editmode:
-        bpy.ops.object.mode_set(mode='EDIT')
+        edit_mode()
 
 def select_obj(obj, enter_editmode=False):
     return select_objs([obj], enter_editmode)
@@ -91,7 +97,7 @@ print("Created igloo demi-sphere.")
 ### DIVIDE VERTICALLY AND CUT OFF IGLOO TOP ###
 
 def create_cones_and_cut_igloo(igloo_obj, vertical_angles):
-    bpy.ops.object.mode_set(mode='OBJECT')
+    object_mode()
 
     # Create all cones
     cone_objs = []
@@ -137,9 +143,9 @@ def separate_igloo_top(igloo_obj):
 
     # Separate top from igloo
     select_obj(igloo_obj)
-    bpy.ops.object.mode_set(mode='EDIT')
+    edit_mode()
     bpy.ops.mesh.separate(type="LOOSE")
-    bpy.ops.object.mode_set(mode='OBJECT')
+    object_mode()
     bpy.data.objects[igloo_obj.name + ".001"].name = "igloo_top"
 
     return igloo_obj, bpy.data.objects["igloo_top"], radius
@@ -163,20 +169,20 @@ print("Cut igloo, vertically.")
 ### DIVIDE ALONG Z AXIS ###
 
 def create_planes_and_cut_igloo(igloo_obj, igloo_top_radius, z_rotations):
-    bpy.ops.object.mode_set(mode='OBJECT')
+    object_mode()
 
     plane_objs = []
     for z_rotation in z_rotations:
         # Create cube, to be used as a boolean difference object
         bpy.ops.mesh.primitive_cube_add(size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         plane_objs.append(bpy.context.active_object)
-        bpy.ops.object.mode_set(mode='EDIT')
+        edit_mode()
         bpy.ops.transform.translate(value=(0, 1, 0), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, True, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
-        bpy.ops.object.mode_set(mode='OBJECT')
+        object_mode()
         bpy.ops.transform.resize(value=(BRICKS_GAP/2, 2*IGLOO_RADIUS, 2 * IGLOO_RADIUS), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
-        bpy.ops.object.mode_set(mode='EDIT')
+        edit_mode()
         bpy.ops.transform.translate(value=(0, igloo_top_radius/2, 0), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, True, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
-        bpy.ops.object.mode_set(mode='OBJECT')
+        object_mode()
 
         # Rotate the object along the Z-axis
         bpy.ops.transform.rotate(value=math.radians(z_rotation), orient_axis='Z', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
@@ -210,9 +216,9 @@ print("Cut igloo, along Z rotation axis.")
 ### MAKE BLOCK INTO ITS OWN OBJECT ###
 
 select_obj(igloo_obj)
-bpy.ops.object.mode_set(mode='EDIT')
+edit_mode()
 bpy.ops.mesh.separate(type="LOOSE")
-bpy.ops.object.mode_set(mode='OBJECT')
+object_mode()
 
 ################################
 ### ISOLATE DIFFERENT BLOCKS ###
