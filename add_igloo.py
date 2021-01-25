@@ -53,21 +53,25 @@ class Igloo(bpy.types.Operator):
 		description = "The number of vertical bricks",
 		default = 5,
 		min = 3,
-		max = 10
+		max = 20
 	)
 
 	nb_bricks_radial : IntProperty(
 		name = "Radial Bricks Count",
 		description = "The number of radial bricks",
 		default = 3,
-		min = 3,
+		min = 2,
 		max = 20
 	)
 
 	def execute(self, context):
-		# TODO do something about this
-		assert(90 % self.nb_bricks_vertical == 0)
-		assert(360 % self.nb_bricks_radial == 0)
+		if 90 % self.nb_bricks_vertical != 0:
+			self.report({"ERROR"}, "The number of vertical bricks must be a multiple of 90 (i.e., 2, 3, 5, 6, 9, 15, 18, etc…)")
+			return {"CANCELLED"}
+
+		if 360 % self.nb_bricks_radial != 0:
+			self.report({"ERROR"}, "The number of radial bricks must be a multiple of 360 (i.e., 2, 3, 4, 5, 6, 8, 9, 12, 15, 18, 20, etc…)")
+			return {"CANCELLED"}
 
 		igloo_obj, igloo_top_obj = self.__create()
 		
