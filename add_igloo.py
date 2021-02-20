@@ -59,7 +59,7 @@ class Igloo(bpy.types.Operator):
 	nb_bricks_radial : IntProperty(
 		name = "Radial Bricks Count",
 		description = "The number of radial bricks",
-		default = 3,
+		default = 6,
 		min = 2,
 		max = 20
 	)

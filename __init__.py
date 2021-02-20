@@ -11,17 +11,21 @@ bl_info = {
 }
 
 from . import add_igloo
+from . import prepare_brick
 from . import utils
 
 from importlib import reload
 reload(add_igloo)
+reload(prepare_brick)
 reload(utils)
 
 def register():
 	add_igloo.register()
+	prepare_brick.register()
 
 def unregister():
 	add_igloo.unregister()
+	prepare_brick.unregister()
 
 if __name__ == "__main__":
 	register()
