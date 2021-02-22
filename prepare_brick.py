@@ -28,8 +28,6 @@ class PrepareBrick(bpy.types.Operator):
 		for obj in objects:
 			select_obj(obj)
 
-			bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
-
 			origin_to_object_vector = bpy.context.object.location
 
 			edit_mode()
@@ -51,12 +49,16 @@ class PrepareBrick(bpy.types.Operator):
 				bpy.ops.mesh.select_all(action='DESELECT')
 
 				# select one face from the "negative z-normal" faces that points in the same xy-direction as the "origin-to-face" vector
-				example_face = next(f for f, n in faces_normal.items() if self.__same_direction(f, n))
-				example_normal_z = faces_normal[example_face][2]
+				potential_example_faces = [f for f, n in faces_normal.items() if self.__same_direction(f, n)]
+				median_normal_z = np.median([faces_normal[f][2] for f in potential_example_faces])
+				potential_example_faces = sorted(potential_example_faces, key=lambda f: abs(faces_normal[f][2] - median_normal_z))
 
-				if example_face == None:
+				if len(potential_example_faces) == 0:
 					print("ERROR: no faces found that match the 'same direction' condition")
 					return {'FINISHED'}
+
+				example_face = potential_example_faces[0]
+				example_normal_z = faces_normal[example_face][2]
 
 				# given this "example" face, find the other "negative z-normal" faces that have a very similar normal vector
 				for face, normal in faces_normal.items():
@@ -71,6 +73,8 @@ class PrepareBrick(bpy.types.Operator):
 			bpy.context.object.modifiers["Solidify"].offset = 1
 			bpy.context.object.modifiers["Solidify"].thickness = self.thickness
 			bpy.ops.object.modifier_apply(modifier="Solidify")
+
+			bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
 
 		return {'FINISHED'}
 
