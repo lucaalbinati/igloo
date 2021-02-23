@@ -22,7 +22,6 @@ class PrepareBrick(bpy.types.Operator):
 	)
 
 	def execute(self, context):
-		
 		objects = bpy.context.selected_objects
 
 		for obj in objects:
@@ -83,8 +82,14 @@ class PrepareBrick(bpy.types.Operator):
 
 		return np.sign(origin_to_face_vector[0]) == np.sign(normal[0]) and np.sign(origin_to_face_vector[1]) == np.sign(normal[1])
 
+def menu_func(self, context):
+	self.layout.operator(PrepareBrick.bl_idname)
+
 def register():
 	bpy.utils.register_class(PrepareBrick)
+	bpy.types.VIEW3D_MT_object.append(menu_func)
 
 def unregister():
 	bpy.utils.unregister_class(PrepareBrick)
+	bpy.types.VIEW3D_MT_object.remove(menu_func)
+	

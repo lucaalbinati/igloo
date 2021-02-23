@@ -17,19 +17,19 @@ class Igloo(bpy.types.Operator):
 	bl_options = {'REGISTER', 'UNDO'}
 	
 	precision : IntProperty(
-	   name = "Precision",
-	   description = "The number of vertices of the igloo's sphere",
-	   default = 32,
-	   min = 16,
-	   max = 256
+		name = "Precision",
+		description = "The number of vertices of the igloo's sphere",
+		default = 32,
+		min = 16,
+		max = 256
 	)
 
 	radius : FloatProperty(
-	   name = "Radius",
-	   description = "The radius of the igloo",
-	   default = 2,
-	   min = 0.05,
-	   max = 5.0
+		name = "Radius",
+		description = "The radius of the igloo",
+		default = 2,
+		min = 0.05,
+		max = 5.0
 	)
 
 	thickness_ratio : FloatProperty(
@@ -249,7 +249,6 @@ class Igloo(bpy.types.Operator):
 		bpy.ops.mesh.separate(type="LOOSE")
 		object_mode()
 
-
 def menu_func(self, context):
 	self.layout.operator(Igloo.bl_idname)
 
@@ -260,3 +259,4 @@ def register():
 def unregister():
 	bpy.utils.unregister_class(Igloo)
 	bpy.types.VIEW3D_MT_mesh_add.remove(menu_func)
+	
