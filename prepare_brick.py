@@ -80,6 +80,11 @@ class PrepareBrick(bpy.types.Operator):
 	def __same_direction(self, face, normal):
 		origin_to_face_vector = face.verts[0].co
 
+		if np.isclose(normal[2], -1, rtol=0.0001, atol=0.0001):
+			# Some errors occurred for the bricks at the bottom, such that no faces were selected
+			# This if-statement should take care of that
+			return True
+
 		return np.sign(origin_to_face_vector[0]) == np.sign(normal[0]) and np.sign(origin_to_face_vector[1]) == np.sign(normal[1])
 
 def menu_func(self, context):
@@ -92,4 +97,3 @@ def register():
 def unregister():
 	bpy.utils.unregister_class(PrepareBrick)
 	bpy.types.VIEW3D_MT_object.remove(menu_func)
-	
