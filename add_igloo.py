@@ -1,5 +1,6 @@
 import os
 import math
+import numpy as np
 
 import bpy
 import bmesh
@@ -65,6 +66,10 @@ class Igloo(bpy.types.Operator):
 	)
 
 	def execute(self, context):
+		if self.precision % 2 == 1:
+			self.report({"ERROR"}, "The number of precision must be a multiple of 2")
+			return {"CANCELLED"}
+
 		if 90 % self.nb_bricks_vertical != 0:
 			self.report({"ERROR"}, "The number of vertical bricks must be a multiple of 90 (i.e., 2, 3, 5, 6, 9, 15, 18, etc…)")
 			return {"CANCELLED"}
@@ -79,9 +84,10 @@ class Igloo(bpy.types.Operator):
 
 	def __create(self):
 		# Create igloo demi sphere
-		igloo_obj = self.__create_demi_sphere()
+		igloo_obj = self.__create_igloo_base()
 		print("Created igloo demi-sphere.")
 
+		#return None, None
 		# Cut off and separate igloo top
 		vertical_angle = int(90 / self.nb_bricks_vertical)
 		igloo_obj, igloo_top_obj, igloo_top_radius = self.__separate_igloo_top(igloo_obj, vertical_angle)
@@ -111,40 +117,57 @@ class Igloo(bpy.types.Operator):
 
 		return igloo_obj, igloo_top_obj
 
-	def __create_demi_sphere(self):
-		# Create sphere object
-		bpy.ops.mesh.primitive_uv_sphere_add(segments=self.precision, ring_count=self.precision, radius=self.radius, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
-		sphere_obj = bpy.context.active_object
+	def __create_igloo_base(self):
+		#sphere_obj.name = IGLOO_OBJ_NAME
+		def create_demi_sphere(radius):
+			# Create sphere object
+			bpy.ops.mesh.primitive_uv_sphere_add(segments=self.precision, ring_count=self.precision, radius=radius, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+			sphere_obj = bpy.context.active_object
+
+			# Remove bottom half
+			edit_mode()
+			bpy.ops.mesh.select_all(action='DESELECT')
+			bm = bmesh.from_edit_mesh(sphere_obj.data)
+			for face in bm.faces:
+				if all(vert.co[2] <= 0 for vert in face.verts):
+					face.select = True
+			bpy.ops.mesh.delete(type='FACE')
+			object_mode()
+
+			return sphere_obj
+
+		sphere_obj = create_demi_sphere(radius=self.radius)
+
+		inner_radius = (1 - self.thickness_ratio) * self.radius
+		inner_sphere_obj = create_demi_sphere(radius=inner_radius)
+
+		# Join both demi spheres
+		select_objs([inner_sphere_obj, sphere_obj])
+		bpy.ops.object.join()
 		sphere_obj.name = IGLOO_OBJ_NAME
 
-		# Create cube, to be used as a boolean difference object
-		bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=(0, 0, -1), scale=(1, 1, 1))
-		difference_obj = bpy.context.active_object
-		bpy.ops.transform.resize(value=(2*self.radius, 2*self.radius, 1), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, True, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
+		# Merge bottom edges
+		edit_mode()
 
-		# Apply 'Boolean' modifier to the sphere
-		select_obj(sphere_obj)
-		bpy.ops.object.modifier_add(type='BOOLEAN')
-		bpy.context.object.modifiers["Boolean"].object = difference_obj
-		bpy.ops.object.modifier_apply(modifier="Boolean", report=True)
-
-		# Delete the difference object
-		delete_obj(difference_obj)
-
-		# Remove the bottom face
-		select_obj(sphere_obj, enter_editmode=True)
 		bpy.ops.mesh.select_all(action='DESELECT')
 		bm = bmesh.from_edit_mesh(sphere_obj.data)
-		for face in bm.faces:
-			is_bottom_face = all(vert.co[2] == 0 for vert in face.verts)
-			if is_bottom_face:
-				bm.faces.remove(face)
-		bpy.ops.object.mode_set(mode='OBJECT')
+		special_edges = []
+		for edge in bm.edges:			
+			if all(np.isclose(vert.co[2], 0, atol=0.01, rtol=0.01) for vert in edge.verts):
+				if any(v.co[0] == 0 for v in edge.verts) and any(v.co[0] > 0 for v in edge.verts):
+					# For some reason, creating a face from ALL the edges fills the whole bottom face, so instead we make a face between all expect two facing edges first, and then do these two separately
+					special_edges.append(edge)
+					continue
+				edge.select = True
 
-		# Apply 'Solidify' modifier
-		bpy.ops.object.modifier_add(type='SOLIDIFY')
-		bpy.context.object.modifiers["Solidify"].thickness = self.thickness_ratio * self.radius
-		bpy.ops.object.modifier_apply(modifier="Solidify", report=True)
+		bpy.ops.mesh.edge_face_add()
+		
+		bpy.ops.mesh.select_all(action='DESELECT')
+		for edge in special_edges:
+			edge.select = True
+		bpy.ops.mesh.edge_face_add()
+
+		object_mode()
 
 		return sphere_obj
 
