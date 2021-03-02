@@ -146,26 +146,22 @@ class Igloo(bpy.types.Operator):
 		sphere_obj.name = IGLOO_OBJ_NAME
 
 		# Merge bottom edges
+		# For some reason, creating a face from ALL the edges fills the whole bottom face, so instead we make a face between all the edges except two facing edges, which we then do separately
 		edit_mode()
-
 		bpy.ops.mesh.select_all(action='DESELECT')
 		bm = bmesh.from_edit_mesh(sphere_obj.data)
 		special_edges = []
 		for edge in bm.edges:			
 			if all(np.isclose(vert.co[2], 0, atol=0.01, rtol=0.01) for vert in edge.verts):
 				if any(v.co[0] == 0 for v in edge.verts) and any(v.co[0] > 0 for v in edge.verts):
-					# For some reason, creating a face from ALL the edges fills the whole bottom face, so instead we make a face between all expect two facing edges first, and then do these two separately
 					special_edges.append(edge)
 					continue
 				edge.select = True
-
 		bpy.ops.mesh.edge_face_add()
-		
 		bpy.ops.mesh.select_all(action='DESELECT')
 		for edge in special_edges:
 			edge.select = True
 		bpy.ops.mesh.edge_face_add()
-
 		object_mode()
 
 		return sphere_obj
@@ -212,27 +208,29 @@ class Igloo(bpy.types.Operator):
 		return radius
 
 	def __separate_igloo_top(self, igloo_obj):
-		select_obj(igloo_obj)
-		edit_mode()
-		bpy.ops.mesh.separate(type="LOOSE")
-		object_mode()
+		# Separate igloo
+		self.__separate_igloo_into_blocks(igloo_obj)
 
+		# Find the 'igloo' object with the highest z-coordinate center of geometry
 		objs = [obj for obj in bpy.data.objects if obj.name.startswith("igloo")]
 		for obj in objs:
 			bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
 		igloo_top_obj = sorted(objs, key=lambda o: o.location[2], reverse=True)[0]
 		igloo_top_obj.name = IGLOO_TOP_OBJ_NAME
 
+		# Find and merge the other 'igloo' objects
 		select_objs([obj for obj in objs if obj != igloo_top_obj])
 		bpy.ops.object.join()
 		igloo_obj = bpy.context.active_object
 		igloo_obj.name = IGLOO_OBJ_NAME
 
+		# Reset 'igloo_obj's origin to the global origin
 		bpy.ops.object.origin_set(type='ORIGIN_CURSOR', center='MEDIAN')
 
 		return igloo_obj, igloo_top_obj
 
 	def __fix_negative_bug(self, igloo_obj):
+		# Sometimes, depending on the precision, a negative z-coordinate face is created, which we remove here
 		edit_mode()
 		bpy.ops.mesh.select_all(action='DESELECT')
 		bm = bmesh.from_edit_mesh(igloo_obj.data)
