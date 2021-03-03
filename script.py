@@ -14,11 +14,11 @@ def get_angle(loc):
 	y = loc[1]
 	return math.atan2(y, x)
 
-precision = 128
+high_precision = True
 nb_bricks_vertical = 5
 nb_bricks_radial = 6
 
-bpy.ops.mesh.igloo_add(precision=precision, nb_bricks_vertical=nb_bricks_vertical, nb_bricks_radial=nb_bricks_radial)
+bpy.ops.mesh.igloo_add(high_precision=high_precision, nb_bricks_vertical=nb_bricks_vertical, nb_bricks_radial=nb_bricks_radial)
 
 if not os.path.isdir(OUTPUT_DIR):
 	os.makedirs(OUTPUT_DIR)
