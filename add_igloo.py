@@ -114,11 +114,16 @@ class Igloo(bpy.types.Operator):
 		return igloo_obj, igloo_top_obj
 
 	def __create_igloo_base(self):
-		def create_demi_sphere(radius):
+		def create_demi_sphere(radius, inverse_normals=False):
 			# Create sphere object
 			precision = HIGH_PRECISION if self.high_precision else LOW_PRECISION
 			bpy.ops.mesh.primitive_uv_sphere_add(segments=precision, ring_count=precision, radius=radius, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
 			sphere_obj = bpy.context.active_object
+
+			if inverse_normals:
+				edit_mode()
+				bpy.ops.mesh.flip_normals()
+				object_mode()
 
 			# Remove bottom half
 			edit_mode()
@@ -135,7 +140,7 @@ class Igloo(bpy.types.Operator):
 		sphere_obj = create_demi_sphere(radius=self.radius)
 
 		inner_radius = (1 - self.thickness_ratio) * self.radius
-		inner_sphere_obj = create_demi_sphere(radius=inner_radius)
+		inner_sphere_obj = create_demi_sphere(radius=inner_radius, inverse_normals=True)
 
 		# Join both demi spheres
 		select_objs([inner_sphere_obj, sphere_obj])
