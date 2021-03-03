@@ -157,11 +157,19 @@ class Igloo(bpy.types.Operator):
 					special_edges.append(edge)
 					continue
 				edge.select = True
-		bpy.ops.mesh.edge_face_add()
+
+		def add_face():
+			bpy.ops.mesh.edge_face_add()
+			selected_face = next(f for f in bm.faces if f.select)
+			if selected_face.normal[2] > 0:
+				bpy.ops.mesh.flip_normals()
+
+		add_face()
+
 		bpy.ops.mesh.select_all(action='DESELECT')
 		for edge in special_edges:
 			edge.select = True
-		bpy.ops.mesh.edge_face_add()
+		add_face()
 		object_mode()
 
 		return sphere_obj
