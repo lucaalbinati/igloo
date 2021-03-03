@@ -98,9 +98,6 @@ class Igloo(bpy.types.Operator):
 		igloo_obj, igloo_top_obj = self.__separate_igloo_top(igloo_obj)
 		print("Separate igloo top from the rest.")
 
-		# Fix bottom face bug
-		self.__fix_negative_bug(igloo_obj)
-
 		# Divide the rest, radially
 		radial_angle = int(360 / self.nb_bricks_radial)
 		radial_angles = []
@@ -145,6 +142,9 @@ class Igloo(bpy.types.Operator):
 		bpy.ops.object.join()
 		sphere_obj.name = IGLOO_OBJ_NAME
 
+		# Fix bottom face bug
+		self.__fix_negative_bug(sphere_obj)
+
 		# Merge bottom edges
 		# For some reason, creating a face from ALL the edges fills the whole bottom face, so instead we make a face between all the edges except two facing edges, which we then do separately
 		edit_mode()
@@ -176,7 +176,6 @@ class Igloo(bpy.types.Operator):
 			# Compute cone dimensions based on 'vertical_angle'
 			depth = self.radius
 			radius = depth * math.tan(math.radians(vertical_angle))
-			print("{}: {}".format(vertical_angle, radius))
 
 			# Create cone
 			precision = HIGH_PRECISION if self.high_precision else LOW_PRECISION
