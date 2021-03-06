@@ -53,15 +53,16 @@ class PrepareBrick(bpy.types.Operator):
 				potential_example_faces = sorted(potential_example_faces, key=lambda f: abs(faces_normal[f][2] - median_normal_z))
 
 				if len(potential_example_faces) == 0:
-					print("ERROR: no faces found that match the 'same direction' condition")
-					return {'FINISHED'}
+					print("ERROR: no faces found that match the 'same direction' condition, for object '{}'".format(obj.name))
+					continue
 
 				example_face = potential_example_faces[0]
 				example_normal_z = faces_normal[example_face][2]
+				example_loc_z = example_face.calc_center_bounds()[2]
 
 				# given this "example" face, find the other "negative z-normal" faces that have a very similar normal vector
 				for face, normal in faces_normal.items():
-					if np.isclose(normal[2], example_normal_z, rtol=0.01, atol=0.01):
+					if np.isclose(normal[2], example_normal_z, rtol=0.01, atol=0.01) and np.isclose(face.calc_center_bounds()[2], example_loc_z, rtol=0.1, atol=0.1):
 						face.select = True
 
 			bpy.ops.mesh.delete(type='FACE')
